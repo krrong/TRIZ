@@ -1,34 +1,43 @@
 #include <iostream>
+#include <string>
 #include <vector>
 using namespace std;
 
-int m;
-int dp[23];
-vector<vector<int>> v;
-vector<pair<string, int>> words;
+vector<string> words;
+int score[23];
+int alpa[26];
+int answer;
+int M;
+int sum;
 
-bool check(string str, vector<int> v) {
-	int size = str.size();
-	vector<int> tmp = v;
-	for (int i = 0; i < size; i++) {
-		// 알파벳을 만들 수 없으면 flag교체
-		if (tmp[str[i] - 'a'] != 0) {
-			tmp[str[i] - 'a']--;
-		}
-		else if (tmp[str[i] - 'a'] == 0) {
-			return false;
+// 백트래킹
+void backtrack(int index, int cnt[26], int sum) {
+	// M개 뽑으면
+	if (index == M) {
+		answer = max(sum, answer);
+		return;
+	}
+
+	backtrack(index + 1, cnt, sum);
+
+	bool ok = true;
+	for (int i = 0; i < words[index].size(); i++) {
+		// 사용 알파벳 감소시킴
+		cnt[words[index][i] - 'a']--;
+		
+		// 음수가 되면 단어를 만들 수 없음
+		if (cnt[words[index][i] - 'a'] < 0) {
+			ok = false;
 		}
 	}
-	return true;
-}
 
-void renew(string str, vector<int> &v) {
-	int size = str.size();
-	for (int i = 0; i < size; i++) {
-		// 단어를 만들 수 있으면 알파벳 감소
-		if (v[str[i] - 'a'] != 0) {
-			v[str[i] - 'a']--;
-		}
+	// 단어를 만들 수 있는 경우
+	if (ok == true) {
+		backtrack(index + 1, cnt, sum + score[index]);
+	}
+	for (int i = 0; i < words[index].size(); i++) {
+		// 사용 알파벳 원위치
+		cnt[words[index][i] - 'a']++;
 	}
 }
 
@@ -37,60 +46,22 @@ int main() {
 	cin.tie(0);
 	cout.tie(0);
 
-	vector<int> alpa;
+	// 입력
 	for (int i = 0; i < 26; i++) {
-		int a;
-		cin >> a;
-		alpa.push_back(a);
+		cin >> alpa[i];
+	}
+	cin >> M;
+
+	for (int i = 0; i < M; i++) {
+		string str;
+		int s;
+		cin >> str >> s;
+		words.push_back(str);
+		score[i] = s;
 	}
 
-	cin >> m;
-
-	for (int i = 0; i < m; i++) {
-		v.push_back(alpa);
-		string s;
-		int a;
-		cin >> s >> a;
-		words.push_back(make_pair(s, a));
-	}
-
-	// 첫 항
-	if (check(words[0].first, v[0]) == true) {
-		renew(words[0].first, v[0]);
-		dp[0] = words[0].second;
-	}
-
-	// 나머지
-	for (int i = 1; i < m; i++) {
-		if (check(words[i].first, v[i]) == true) {
-			dp[i] = words[i].second;
-			renew(words[i].first, v[i]);
-		}
-		vector<int> tmp;
-		for (int j = 0; j < i; j++) {
-			tmp.push_back(0);
-			if (check(words[i].first, v[j]) == true) {
-				if (dp[i] < dp[j] + dp[i]) {
-					v[i] = v[j];
-					renew(words[i].first, v[i]);
-					tmp[j] = dp[j] + dp[i];
-				}
-			}
-		}
-		for (int j = 0; j < i; j++) {
-			if (tmp[j] > dp[i]) {
-				dp[i] = tmp[j];
-			}
-		}
-	}
-
-	int max = 0;
-	for (int i = 0; i < m; i++) {
-		if (dp[i] > max) {
-			max = dp[i];
-		}
-	}
-	cout << max;
+	backtrack(0, alpa, sum);
+	cout << answer;
 
 	return 0;
 }
